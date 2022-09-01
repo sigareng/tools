@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>HTML Decode or Encode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <style media="screen">
+      *,
+      *:before,
+      *:after{
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+    body{
+        background-color: #a9d1ea;
+    }
+    @media only screen and (min-width: 768px) {
+        .heads{
+            padding: 10%;
+        }
+    }
+    .container{
+        background-color: #ffffff;
+        width: 100%;
+        min-height: 250px;
+        padding: 30px 20px;
+        border-radius: 8px;
+        box-shadow:  0 20px 25px rgba(0,0,0,0.25);
+    }
+    .decode{
+        top : 90%;
+        padding-bottom: 50px;
+    }
+    .container *{
+        font-size: 16px;
+    }
+    textarea{
+        display: block;
+        width: 100%;
+        min-height: 230px;
+        resize: none;
+        padding: 20px;
+        color: #202020;
+        border: 2px solid #3ba51f;
+        border-radius: 5px;
+        outline: none;
+    }
+    p{
+        width: 100%;
+        text-align: right;
+        margin-top: -30px;
+        padding-right: 10px;
+        color: #737373;
+    }
+    .btn-field {
+        width: 100%;
+        margin: 20px 0 20px 0;
+        padding: 10px;
+        text-align: center;
+    }
+
+    h5 {
+        color: red;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .tag {
+    display: inline-block;
+    border-radius: 3px;
+    padding: .2em .5em .3em;
+    border-radius: 2px;
+    background: var(--tag-bg);
+    color: var(--text-color);
+    font-weight: 600;
+    margin: .25em .1em;
+    }
+    #tags{
+        margin:50px 10px 0 0;
+    }
+    .tagc {
+        /*background: #f0db4f;*/
+        color: #000
+    }
+</style>
+</head>
+<body>
+    <div class="heads">
+            <div class="container">
+                <h5>HTML Decode / Encode</h5>
+                <textarea id="encode" rows="5" placeholder="Type something here.."></textarea>
+                <p id="result" hidden></p>
+
+                <div class="btn">
+                    <button class="btn-field" id="btn-decode"><span>&#8681;</span> Decode <span>&#8681;</span></button>
+                    <button class="btn-field" id="btn-encode"><span>&#8679;</span> Encode <span>&#8679;</span></button>
+                </div>
+
+                <textarea id="decode" rows="5" placeholder="Type something here.."></textarea>
+                <p id="resdecode" hidden></p>
+
+            <div id="tags">
+                <h1>Tags</h1>
+            </div>
+        </div>
+                <script>
+                var tags = document.getElementById("tags")
+                  var encodetext = document.getElementById("encode");
+                  var decodetext = document.getElementById("decode");
+                  var result = document.getElementById("result");
+                  var resdecode = document.getElementById("resdecode");
+                  var btn = document.getElementById("btn-decode");
+                  var btnencode = document.getElementById("btn-encode");
+                  result.textContent = 0;
+                  resdecode.textContent = 0;
+
+                  decodetext.addEventListener("input",function(){
+                    resdecode.removeAttribute("hidden")
+                    result.setAttribute("hidden",true)
+                    var textLength = decodetext.value.length;
+                    resdecode.textContent = textLength+" char";
+                    decodetext.style.borderColor = "#31821b";
+                    resdecode.style.color = "#31821b";
+                });
+                  encodetext.addEventListener("input",function(){
+                    result.removeAttribute("hidden")
+                    resdecode.setAttribute("hidden",true)
+                    var textLength = encodetext.value.length;
+                    result.textContent = textLength+" char";
+                    encodetext.style.borderColor = "#31821b";
+                    result.style.color = "#31821b";
+                });
+                  btn.addEventListener("click",function(){
+                    if (encodetext.value == "") {
+                        alert("No Value");
+                    } else{
+                        decodetext.value = decodeURIComponent(encodetext.value)
+                    }
+                  })
+                  btnencode.addEventListener("click",function(){
+                    if (decodetext.value == "") {
+                        alert("No Value");
+                    } else{
+                        encodetext.value = encodeURIComponent(decodetext.value)
+                    }
+                  })
+                    const kl = ["Encode","Decode","utf8","Text","HTML","entities","convertor","encoding","characters","escaping","decoding","unescape","unicode","ascii"]
+                    for (var i = 0; i < kl.length; i++) {
+                        const node = document.createElement("a");
+                        const as = document.createElement("span")
+                        const textnode = document.createTextNode("#"+kl[i]);
+                        as.setAttribute("class", "tag tagc");
+                        as.setAttribute("rel","tag");
+                        as.style.background = '#' + Math.random().toString(16).substr(-6)
+                        node.appendChild(as);
+                        as.appendChild(textnode);
+                        document.getElementById("tags").appendChild(node);
+                    }
+            </script>
+        </body>
+        </html>
