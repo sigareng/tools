@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Replace line breaks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <style media="screen">
+      *,
+      *:before,
+      *:after{
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+    body{
+        background-color: #a9d1ea;
+    }
+    @media only screen and (min-width: 768px) {
+        .heads{
+            padding: 10%;
+        }
+    }
+    .container{
+        background-color: #ffffff;
+        width: 100%;
+        min-height: 250px;
+        padding: 30px 20px;
+        border-radius: 8px;
+        box-shadow:  0 20px 25px rgba(0,0,0,0.25);
+    }
+    .decode{
+        top : 90%;
+        padding-bottom: 50px;
+    }
+    .container *{
+        font-size: 16px;
+    }
+    textarea{
+        display: block;
+        width: 100%;
+        min-height: 230px;
+        resize: none;
+        padding: 20px;
+        color: #202020;
+        border: 2px solid #3ba51f;
+        border-radius: 5px;
+        outline: none;
+    }
+    p{
+        width: 100%;
+        text-align: right;
+        margin-top: -30px;
+        padding-right: 10px;
+        color: #737373;
+    }
+    .btn-field {
+        width: 100%;
+        margin: 20px 0 20px 0;
+        padding: 10px;
+        text-align: center;
+    }
+
+    h5 {
+        color: red;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .tag {
+    display: inline-block;
+    border-radius: 3px;
+    padding: .2em .5em .3em;
+    border-radius: 2px;
+    background: var(--tag-bg);
+    color: var(--text-color);
+    font-weight: 600;
+    margin: .25em .1em;
+    }
+    #tags{
+        margin:50px 10px 0 0;
+    }
+    .tagc {
+        /*background: #f0db4f;*/
+        color: #000
+    }
+</style>
+</head>
+<body>
+    <div class="heads">
+            <div class="container">
+                <h5>Replace line breaks with \n or Reversed</h5>
+                <h6>Enter text with line breaks and convert breaks to "\n", so all text is in a single line.</h6>
+                <textarea id="input" rows="5" placeholder="Type something here.."></textarea>
+                <p id="result" hidden></p>
+
+                <div class="btn">
+                    <button class="btn-field" id="btn-input"><span>&#8681;</span> Replace <span>&#8681;</span></button>
+                    <button class="btn-field" id="btn-output"><span>&#8679;</span> Reversed <span>&#8679;</span></button>
+                </div>
+
+                <textarea id="output" rows="5" placeholder="Type something here.."></textarea>
+                <p id="resdecode" hidden></p>
+
+            <div id="tags">
+                <h1>Tags</h1>
+            </div>
+        </div>
+                <script>
+                  var on_input = document.getElementById("btn-input");
+                  var on_output = document.getElementById("btn-output");
+                	on_input.addEventListener("click",function(){
+                		var input = document.getElementById("input").value;
+                		if (!input)
+                		{
+                			alert("Invalid input");
+                		}
+                		var output = "";
+                		// Replace line-breaks with "\n"
+                		output = input.replace(/(?:\r\n|\r|\n)/g, '\\r\\n');
+                		document.getElementById("output").value = output;
+                	});
+
+                	on_output.addEventListener("click",function(){
+                		var input = document.getElementById("output").value;
+                		var da = input.replace(/(?:\\[rn]|[\r\n])/g,"\n");
+                		var sa = JSON.stringify(input.replace(/(?:\\[rn]|[\r\n])/g, "\r\n"));
+                		document.getElementById("input").value = String(da);	
+                	});
+            </script>
+        </body>
+        </html>
