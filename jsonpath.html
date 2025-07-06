@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JSON Viewer - sigareng</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono|Roboto:300,400" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: #ddd;
+    }
+
+    #title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #004c8c;
+      color: white;
+    }
+
+    #editor-box, #reader-box {
+      margin: 20px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    body.dark-mode #editor-box,
+    body.dark-mode #reader-box {
+      background-color: #2e2e2e;
+      box-shadow: none;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+
+    .editor-button-row-button {
+      margin: 5px 5px 10px 0;
+      padding: 6px 12px;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .editor-button-row-button:hover {
+      background-color: #005fa3;
+    }
+
+    #json-reader {
+      font-family: 'Roboto Mono', monospace;
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      max-height: 500px;
+      overflow: auto;
+      border: 1px solid #ddd;
+    }
+
+    body.dark-mode #json-reader {
+      background-color: #1a1a1a;
+      border-color: #444;
+    }
+
+    details {
+      margin-left: 20px;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 4px;
+      margin: 2px 0;
+      background-color: #eef;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    body.dark-mode summary {
+      background-color: #333;
+    }
+
+    summary:hover {
+      background-color: #dde;
+    }
+
+    body.dark-mode summary:hover {
+      background-color: #444;
+    }
+
+    .highlight {
+      background-color: #ffe58f !important;
+    }
+
+    body.dark-mode .highlight {
+      background-color: #666600 !important;
+    }
+
+    .key { font-weight: bold; color: #004c8c; }
+    .string { color: #008000; }
+    .number { color: #0000cd; }
+    .boolean { color: #b22222; }
+    .null { color: #a9a9a9; }
+    .array { color: #ff6600; }
+    .object { color: #cc00cc; }
+    .unknown { color: #999; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #004c8c;
+      color: white;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="title-bar">
+    <h2>JSON Viewer</h2>
+    <button id="toggle-dark-mode" title="Toggle Dark Mode">🌓</button>
+  </div>
+
+  <div id="editor-box">
+    <div>
+      <button class="editor-button-row-button" onclick="loadSample()">Sample</button>
+      <button class="editor-button-row-button" onclick="beautify()">Beautify</button>
+      <button class="editor-button-row-button" onclick="minify()">Minify</button>
+    </div>
+    <textarea id="editor"></textarea>
+  </div>
+
+  <div id="reader-box">
+    <label>Path:</label>
+    <input id="json-path" readonly style="width: 60%;" />
+    <button onclick="copyPath()">Copy</button>
+    <div id="json-reader" class="json-reader-tree"></div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/sigareng/tools" target="_blank">View on GitHub</a>
+  </footer>
+
+  <script>
+      const editor = document.getElementById('editor');
+const reader = document.getElementById('json-reader');
+const pathInput = document.getElementById('json-path');
+let lastHighlighted = null;
+
+// Load sample JSON ke editor dan render
+function loadSample() {
+  const sample = {
+    user: {
+      name: "Alice",
+      age: 28,
+      isActive: true,
+      address: {
+        city: "Jakarta",
+        zip: 12345
+      }
+    },
+    items: [1, 2, 3, "hello", false],
+    nullValue: null
+  };
+  editor.value = JSON.stringify(sample, null, 2);
+  renderJSON(sample);
+}
+
+// Beautify JSON di editor
+function beautify() {
+  try {
+    const obj = JSON.parse(editor.value);
+    editor.value = JSON.stringify(obj, null, 2);
+  } catch {
+    alert('Invalid JSON');
+  }
+}
+
+// Minify JSON di editor
+function minify() {
+  try {
+    const obj = JSON.parse(editor.value);
+    editor.value = JSON.stringify(obj);
+  } catch {
+    alert('Invalid JSON');
+  }
+}
+
+// Copy path ke clipboard
+function copyPath() {
+  navigator.clipboard.writeText(pathInput.value);
+  alert('Copied!');
+}
+
+// Render JSON ke viewer
+function renderJSON(json) {
+  reader.innerHTML = '';
+  const tree = buildTreeStructured(json);
+  reader.appendChild(tree);
+}
+
+// Bangun tree JSON secara rekursif dengan <details>
+function buildTreeStructured(data, path = '') {
+  const container = document.createElement('div');
+
+  if (Array.isArray(data)) {
+    data.forEach((item, index) => {
+      const currentPath = `${path}[${index}]`;
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.innerHTML = `<span class="key">[${index}]</span>: ${getValueType(item)}`;
+      summary.addEventListener('click', (e) => handleClick(e, summary, currentPath));
+      details.appendChild(summary);
+      if (typeof item === 'object' && item !== null) {
+        details.appendChild(buildTreeStructured(item, currentPath));
+      }
+      container.appendChild(details);
+    });
+  } else if (typeof data === 'object' && data !== null) {
+    Object.entries(data).forEach(([key, value]) => {
+      const currentPath = path ? `${path}.${key}` : key;
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.innerHTML = `<span class="key">${key}</span>: ${getValueType(value)}`;
+      summary.addEventListener('click', (e) => handleClick(e, summary, currentPath));
+      details.appendChild(summary);
+      if (typeof value === 'object' && value !== null) {
+        details.appendChild(buildTreeStructured(value, currentPath));
+      }
+      container.appendChild(details);
+    });
+  }
+
+  return container;
+}
+
+// Warna sesuai tipe data
+function getValueType(value) {
+  if (value === null) return `<span class="null">null</span>`;
+  if (Array.isArray(value)) return `<span class="array">[Array]</span>`;
+  if (typeof value === 'object') return `<span class="object">{Object}</span>`;
+  if (typeof value === 'string') return `<span class="string">"${value}"</span>`;
+  if (typeof value === 'number') return `<span class="number">${value}</span>`;
+  if (typeof value === 'boolean') return `<span class="boolean">${value}</span>`;
+  return `<span class="unknown">${value}</span>`;
+}
+
+// Highlight dan set path saat klik
+function handleClick(event, element, path) {
+  event.stopPropagation();
+  if (lastHighlighted) {
+    lastHighlighted.classList.remove('highlight');
+  }
+  element.classList.add('highlight');
+  lastHighlighted = element;
+  pathInput.value = path;
+}
+
+// Event parsing saat ketik/copy paste di editor
+editor.addEventListener('input', () => {
+  try {
+    const json = JSON.parse(editor.value);
+    renderJSON(json);
+    pathInput.value = '';
+  } catch {
+    reader.innerHTML = '<p style="color: red;">Invalid JSON</p>';
+    pathInput.value = '';
+  }
+});
+
+// Toggle dark mode dengan tombol
+const darkModeBtn = document.getElementById('toggle-dark-mode');
+darkModeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+});
+
+// Load sample saat halaman terbuka
+window.onload = loadSample;
+
+  </script>
+  </body>
+  </html>
