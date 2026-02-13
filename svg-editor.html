@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Editor Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a24;
+      --fg-primary: #e8e8ed;
+      --fg-secondary: #9898a6;
+      --fg-muted: #5a5a6e;
+      --accent: #00d4aa;
+      --accent-dim: #00d4aa33;
+      --border: #2a2a38;
+      --error: #ff4757;
+      --warning: #ffa502;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-primary);
+      color: var(--fg-primary);
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .ace_editor {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .ace_gutter {
+      background: var(--bg-tertiary) !important;
+    }
+
+    .ace_gutter-active-line {
+      background: var(--accent-dim) !important;
+    }
+
+    .ace_cursor {
+      color: var(--accent) !important;
+    }
+
+    .ace_selection {
+      background: var(--accent-dim) !important;
+    }
+
+    .ace_active-line {
+      background: #ffffff08 !important;
+    }
+
+    #editor {
+      background: var(--bg-secondary);
+    }
+
+    .preview-container {
+      background: 
+        linear-gradient(45deg, #1a1a24 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a24 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a24 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a24 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      background-color: #12121a;
+    }
+
+    .draggable {
+      cursor: grab;
+      transition: filter 0.15s ease;
+    }
+
+    .draggable:hover {
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+
+    .draggable.dragging {
+      cursor: grabbing;
+    }
+
+    .draggable.selected {
+      outline: 2px dashed var(--accent);
+      outline-offset: 2px;
+    }
+
+    .resize-handle {
+      fill: var(--accent);
+      cursor: nwse-resize;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .draggable:hover .resize-handle,
+    .draggable.selected .resize-handle {
+      opacity: 1;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-indicator.syncing {
+      animation: pulse 0.5s ease-in-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .toolbar-btn {
+      transition: all 0.2s ease;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .toolbar-btn:active {
+      transform: scale(0.95);
+    }
+
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      color: var(--fg-primary);
+      font-size: 11px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+    }
+
+    .glow-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.3;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--fg-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="h-screen flex flex-col">
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--accent)]">
+            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+            <line x1="12" y1="22" x2="12" y2="15.5"/>
+            <polyline points="22 8.5 12 15.5 2 8.5"/>
+          </svg>
+          <span class="font-semibold text-lg tracking-tight">SVG Editor</span>
+        </div>
+        <div class="glow-line w-px h-6 bg-[var(--border)]"></div>
+        <div class="flex items-center gap-1 text-sm text-[var(--fg-secondary)]">
+          <span id="canvasSize" class="px-2 py-1 bg-[var(--bg-tertiary)] rounded">800 x 600</span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="formatBtn" class="toolbar-btn tooltip px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2" data-tooltip="Format SVG">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="21" y1="10" x2="3" y2="10"/>
+            <line x1="21" y1="6" x2="3" y2="6"/>
+            <line x1="21" y1="14" x2="3" y2="14"/>
+            <line x1="21" y1="18" x2="3" y2="18"/>
+          </svg>
+          Format
+        </button>
+        <button id="copyBtn" class="toolbar-btn tooltip px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2" data-tooltip="Copy SVG">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy
+        </button>
+        <button id="downloadBtn" class="toolbar-btn tooltip px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 bg-[var(--accent)] text-[var(--bg-primary)] hover:bg-[#00eebb]" data-tooltip="Download SVG">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+      <!-- Editor Panel -->
+      <div class="w-1/2 flex flex-col border-r border-[var(--border)]">
+        <div class="flex items-center justify-between px-4 py-2 bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
+          <div class="flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--accent)]">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span class="text-sm font-medium">Source Code</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-[var(--fg-muted)]">
+            <span id="lineCount">0 lines</span>
+            <span id="charCount">0 chars</span>
+          </div>
+        </div>
+        <div id="editor" class="flex-1"></div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="w-1/2 flex flex-col">
+        <div class="flex items-center justify-between px-4 py-2 bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
+          <div class="flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--accent)]">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span class="text-sm font-medium">Preview</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="statusIndicator" class="status-indicator flex items-center gap-1.5 text-xs">
+              <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
+              <span class="text-[var(--fg-secondary)]">Ready</span>
+            </span>
+            <button id="zoomOut" class="toolbar-btn p-1 rounded" data-tooltip="Zoom Out">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </button>
+            <span id="zoomLevel" class="text-xs text-[var(--fg-secondary)] w-12 text-center">100%</span>
+            <button id="zoomIn" class="toolbar-btn p-1 rounded" data-tooltip="Zoom In">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="11" y1="8" x2="11" y2="14"/>
+                <line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </button>
+            <button id="zoomReset" class="toolbar-btn p-1 rounded text-xs" data-tooltip="Reset Zoom">
+              Reset
+            </button>
+          </div>
+        </div>
+        
+        <div id="previewWrapper" class="flex-1 overflow-auto preview-container flex items-center justify-center p-4">
+          <div id="previewContainer" class="relative shadow-2xl" style="transform-origin: center;">
+            <div id="errorOverlay" class="absolute inset-0 bg-[var(--bg-secondary)] bg-opacity-95 flex flex-col items-center justify-center hidden z-10">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" class="mb-3">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p class="text-[var(--error)] font-medium mb-1">Invalid SVG</p>
+              <p id="errorMessage" class="text-sm text-[var(--fg-muted)] max-w-xs text-center"></p>
+            </div>
+            <svg id="previewSvg" xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+              <rect width="800" height="600" fill="#1a1a24"/>
+              <circle cx="400" cy="300" r="80" fill="#00d4aa" opacity="0.8" class="draggable"/>
+              <rect x="150" y="200" width="120" height="120" fill="#ff6b6b" opacity="0.8" class="draggable"/>
+              <polygon points="550,200 620,350 480,350" fill="#ffd93d" opacity="0.8" class="draggable"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Element Info Bar -->
+        <div id="elementInfo" class="px-4 py-2 bg-[var(--bg-tertiary)] border-t border-[var(--border)] text-xs text-[var(--fg-muted)] flex items-center gap-4">
+          <span>Selected: <span id="selectedElement" class="text-[var(--fg-primary)]">None</span></span>
+          <span>Position: <span id="elementPos" class="text-[var(--fg-primary)]">-</span></span>
+          <span>Size: <span id="elementSize" class="text-[var(--fg-primary)]">-</span></span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Initialize Ace Editor
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/tomorrow_night");
+    editor.session.setMode("ace/mode/xml");
+    editor.setOptions({
+      showPrintMargin: false,
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true,
+      tabSize: 2,
+      wrap: true
+    });
+
+    // State
+    let zoomLevel = 1;
+    let selectedElement = null;
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let updateTimeout = null;
+
+    // DOM Elements
+    const previewSvg = document.getElementById('previewSvg');
+    const previewContainer = document.getElementById('previewContainer');
+    const errorOverlay = document.getElementById('errorOverlay');
+    const errorMessage = document.getElementById('errorMessage');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const canvasSizeEl = document.getElementById('canvasSize');
+    const lineCountEl = document.getElementById('lineCount');
+    const charCountEl = document.getElementById('charCount');
+    const zoomLevelEl = document.getElementById('zoomLevel');
+    const selectedElementEl = document.getElementById('selectedElement');
+    const elementPosEl = document.getElementById('elementPos');
+    const elementSizeEl = document.getElementById('elementSize');
+
+    // Default SVG content
+    const defaultSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#1a1a24"/>
+  <circle cx="400" cy="300" r="80" fill="#00d4aa" opacity="0.8"/>
+  <rect x="150" y="200" width="120" height="120" fill="#ff6b6b" opacity="0.8"/>
+  <polygon points="550,200 620,350 480,350" fill="#ffd93d" opacity="0.8"/>
+</svg>`;
+
+    editor.setValue(defaultSVG, -1);
+
+    // Parse SVG and update canvas size
+    function updateCanvasSize() {
+      const width = previewSvg.getAttribute('width') || previewSvg.viewBox.baseVal.width;
+      const height = previewSvg.getAttribute('height') || previewSvg.viewBox.baseVal.height;
+      
+      if (width && height) {
+        previewContainer.style.width = `${parseInt(width)}px`;
+        previewContainer.style.height = `${parseInt(height)}px`;
+        canvasSizeEl.textContent = `${width} x ${height}`;
+      }
+    }
+
+    // Update preview from editor
+    function updatePreview() {
+      const content = editor.getValue();
+      
+      try {
+        // Parse SVG
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'image/svg+xml');
+        const errorNode = doc.querySelector('parsererror');
+        
+        if (errorNode) {
+          throw new Error(errorNode.textContent.split('\n')[0]);
+        }
+
+        const svgElement = doc.documentElement;
+        
+        // Copy attributes
+        previewSvg.innerHTML = '';
+        Array.from(svgElement.attributes).forEach(attr => {
+          if (attr.name !== 'xmlns' || previewSvg.getAttribute('xmlns') !== attr.value) {
+            previewSvg.setAttribute(attr.name, attr.value);
+          }
+        });
+        
+        // Copy content
+        previewSvg.innerHTML = svgElement.innerHTML;
+        
+        // Add draggable class to shapes
+        makeElementsDraggable();
+        
+        // Update canvas size
+        updateCanvasSize();
+        
+        // Hide error
+        errorOverlay.classList.add('hidden');
+        setStatus('Ready', true);
+        
+      } catch (err) {
+        errorMessage.textContent = err.message || 'Unable to parse SVG';
+        errorOverlay.classList.remove('hidden');
+        setStatus('Error', false);
+      }
+
+      // Update stats
+      const lines = content.split('\n').length;
+      lineCountEl.textContent = `${lines} lines`;
+      charCountEl.textContent = `${content.length} chars`;
+    }
+
+    // Set status indicator
+    function setStatus(text, success) {
+      const dot = statusIndicator.querySelector('span:first-child');
+      const label = statusIndicator.querySelector('span:last-child');
+      
+      dot.style.backgroundColor = success ? 'var(--accent)' : 'var(--error)';
+      label.textContent = text;
+      statusIndicator.classList.add('syncing');
+      
+      setTimeout(() => {
+        statusIndicator.classList.remove('syncing');
+      }, 500);
+    }
+
+    // Make elements draggable
+    function makeElementsDraggable() {
+      const elements = previewSvg.querySelectorAll('circle, rect, ellipse, polygon, path, text, image, use, line, polyline');
+      
+      elements.forEach(el => {
+        if (el.tagName === 'rect' && el.hasAttribute('width') && el.getAttribute('width') === previewSvg.getAttribute('width')) {
+          return; // Skip background rect
+        }
+        
+        el.classList.add('draggable');
+        el.addEventListener('mousedown', startDrag);
+        el.addEventListener('touchstart', startDrag, { passive: false });
+      });
+    }
+
+    // Get element position
+    function getElementPosition(el) {
+      const tag = el.tagName;
+      
+      if (tag === 'circle' || tag === 'ellipse') {
+        return {
+          x: parseFloat(el.getAttribute('cx')) || 0,
+          y: parseFloat(el.getAttribute('cy')) || 0,
+          type: 'center'
+        };
+      } else if (tag === 'rect') {
+        return {
+          x: parseFloat(el.getAttribute('x')) || 0,
+          y: parseFloat(el.getAttribute('y')) || 0,
+          type: 'corner'
+        };
+      } else if (tag === 'text' || tag === 'image' || tag === 'use') {
+        return {
+          x: parseFloat(el.getAttribute('x')) || 0,
+          y: parseFloat(el.getAttribute('y')) || 0,
+          type: 'corner'
+        };
+      } else if (tag === 'line') {
+        return {
+          x: parseFloat(el.getAttribute('x1')) || 0,
+          y: parseFloat(el.getAttribute('y1')) || 0,
+          x2: parseFloat(el.getAttribute('x2')) || 0,
+          y2: parseFloat(el.getAttribute('y2')) || 0,
+          type: 'line'
+        };
+      } else if (tag === 'polygon' || tag === 'polyline') {
+        const points = el.getAttribute('points');
+        if (points) {
+          const coords = points.trim().split(/[\s,]+/).map(Number);
+          if (coords.length >= 2) {
+            return { x: coords[0], y: coords[1], type: 'polygon', points: coords };
+          }
+        }
+        return { x: 0, y: 0, type: 'polygon', points: [] };
+      } else if (tag === 'path') {
+        const transform = el.getAttribute('transform');
+        if (transform) {
+          const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+          if (match) {
+            return { x: parseFloat(match[1]), y: parseFloat(match[2]), type: 'transform' };
+          }
+        }
+        return { x: 0, y: 0, type: 'transform' };
+      }
+      
+      return { x: 0, y: 0, type: 'unknown' };
+    }
+
+    // Start dragging
+    function startDrag(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const el = e.target;
+      if (!el.classList.contains('draggable')) return;
+      
+      isDragging = true;
+      selectedElement = el;
+      
+      // Remove selection from others
+      document.querySelectorAll('.draggable.selected').forEach(sel => {
+        sel.classList.remove('selected');
+      });
+      
+      el.classList.add('selected', 'dragging');
+      
+      // Get mouse/touch position
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      
+      // Get SVG coordinates
+      const svgRect = previewSvg.getBoundingClientRect();
+      const svgX = (clientX - svgRect.left) / zoomLevel;
+      const svgY = (clientY - svgRect.top) / zoomLevel;
+      
+      // Get element position
+      const pos = getElementPosition(el);
+      dragOffset.x = svgX - pos.x;
+      dragOffset.y = svgY - pos.y;
+      
+      // Update info
+      updateElementInfo(el);
+      
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchmove', drag, { passive: false });
+      document.addEventListener('touchend', endDrag);
+    }
+
+    // Drag handler
+    function drag(e) {
+      if (!isDragging || !selectedElement) return;
+      
+      e.preventDefault();
+      
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      
+      const svgRect = previewSvg.getBoundingClientRect();
+      let svgX = (clientX - svgRect.left) / zoomLevel;
+      let svgY = (clientY - svgRect.top) / zoomLevel;
+      
+      const newX = Math.round(svgX - dragOffset.x);
+      const newY = Math.round(svgY - dragOffset.y);
+      
+      const el = selectedElement;
+      const tag = el.tagName;
+      
+      if (tag === 'circle') {
+        el.setAttribute('cx', newX);
+        el.setAttribute('cy', newY);
+      } else if (tag === 'ellipse') {
+        el.setAttribute('cx', newX);
+        el.setAttribute('cy', newY);
+      } else if (tag === 'rect' || tag === 'text' || tag === 'image' || tag === 'use') {
+        el.setAttribute('x', newX);
+        el.setAttribute('y', newY);
+      } else if (tag === 'line') {
+        const dx = newX - parseFloat(el.getAttribute('x1'));
+        const dy = newY - parseFloat(el.getAttribute('y1'));
+        el.setAttribute('x1', newX);
+        el.setAttribute('y1', newY);
+        el.setAttribute('x2', parseFloat(el.getAttribute('x2')) + dx);
+        el.setAttribute('y2', parseFloat(el.getAttribute('y2')) + dy);
+      } else if (tag === 'polygon' || tag === 'polyline') {
+        const points = el.getAttribute('points');
+        if (points) {
+          const coords = points.trim().split(/[\s,]+/).map(Number);
+          const dx = newX - coords[0];
+          const dy = newY - coords[1];
+          const newCoords = [];
+          for (let i = 0; i < coords.length; i += 2) {
+            newCoords.push(coords[i] + dx, coords[i + 1] + dy);
+          }
+          el.setAttribute('points', newCoords.join(','));
+        }
+      } else if (tag === 'path') {
+        el.setAttribute('transform', `translate(${newX}, ${newY})`);
+      }
+      
+      updateElementInfo(el);
+      
+      // Update editor with debounce
+      clearTimeout(updateTimeout);
+      updateTimeout = setTimeout(() => {
+        syncToEditor();
+      }, 100);
+    }
+
+    // End drag
+    function endDrag() {
+      if (selectedElement) {
+        selectedElement.classList.remove('dragging');
+      }
+      isDragging = false;
+      
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', endDrag);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', endDrag);
+      
+      syncToEditor();
+    }
+
+    // Update element info display
+    function updateElementInfo(el) {
+      const tag = el.tagName;
+      selectedElementEl.textContent = `<${tag}>`;
+      
+      const pos = getElementPosition(el);
+      elementPosEl.textContent = `${pos.x}, ${pos.y}`;
+      
+      let size = '-';
+      if (tag === 'circle') {
+        const r = el.getAttribute('r');
+        size = `r=${r}`;
+      } else if (tag === 'ellipse') {
+        size = `rx=${el.getAttribute('rx')}, ry=${el.getAttribute('ry')}`;
+      } else if (tag === 'rect') {
+        size = `${el.getAttribute('width')} x ${el.getAttribute('height')}`;
+      } else if (tag === 'line') {
+        size = `${el.getAttribute('x2') - el.getAttribute('x1')}px`;
+      }
+      elementSizeEl.textContent = size;
+    }
+
+    // Sync preview changes back to editor
+    function syncToEditor() {
+      // Get current SVG content
+      const svgContent = previewSvg.outerHTML;
+      
+      // Format it nicely
+      const formatted = formatSVG(svgContent);
+      
+      // Update editor without triggering change event
+      const cursorPos = editor.getCursorPosition();
+      editor.setValue(formatted, -1);
+      editor.moveCursorToPosition(cursorPos);
+      
+      setStatus('Synced', true);
+    }
+
+    // Format SVG
+    function formatSVG(svgString) {
+      try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgString, 'image/svg+xml');
+        const serializer = new XMLSerializer();
+        let formatted = serializer.serializeToString(doc);
+        
+        // Pretty print
+        let indent = 0;
+        formatted = formatted.replace(/></g, '>\n<')
+          .split('\n')
+          .map(line => {
+            if (line.match(/^<\//)) indent--;
+            const result = '  '.repeat(Math.max(0, indent)) + line;
+            if (line.match(/^<[^/!?][^>]*[^/]>/) || line.match(/^<[^/!?][^>]*>$/)) indent++;
+            return result;
+          })
+          .join('\n');
+        
+        return formatted;
+      } catch (e) {
+        return svgString;
+      }
+    }
+
+    // Editor change listener
+    let editorChangeTimeout = null;
+    editor.session.on('change', () => {
+      clearTimeout(editorChangeTimeout);
+      editorChangeTimeout = setTimeout(() => {
+        updatePreview();
+      }, 150);
+    });
+
+    // Initial update
+    updatePreview();
+
+    // Zoom controls
+    document.getElementById('zoomIn').addEventListener('click', () => {
+      zoomLevel = Math.min(3, zoomLevel + 0.25);
+      applyZoom();
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', () => {
+      zoomLevel = Math.max(0.25, zoomLevel - 0.25);
+      applyZoom();
+    });
+
+    document.getElementById('zoomReset').addEventListener('click', () => {
+      zoomLevel = 1;
+      applyZoom();
+    });
+
+    function applyZoom() {
+      previewContainer.style.transform = `scale(${zoomLevel})`;
+      zoomLevelEl.textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+
+    // Toolbar buttons
+    document.getElementById('formatBtn').addEventListener('click', () => {
+      const content = editor.getValue();
+      const formatted = formatSVG(content);
+      editor.setValue(formatted, -1);
+      setStatus('Formatted', true);
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(editor.getValue()).then(() => {
+        setStatus('Copied!', true);
+      });
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const svgContent = editor.getValue();
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'design.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Downloaded!', true);
+    });
+
+    // Click outside to deselect
+    previewSvg.addEventListener('click', (e) => {
+      if (e.target === previewSvg) {
+        document.querySelectorAll('.draggable.selected').forEach(el => {
+          el.classList.remove('selected');
+        });
+        selectedElement = null;
+        selectedElementEl.textContent = 'None';
+        elementPosEl.textContent = '-';
+        elementSizeEl.textContent = '-';
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 's') {
+          e.preventDefault();
+          document.getElementById('downloadBtn').click();
+        } else if (e.key === 'f') {
+          e.preventDefault();
+          document.getElementById('formatBtn').click();
+        }
+      }
+      
+      // Delete selected element
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedElement && document.activeElement !== editor.textInput.getElement()) {
+          e.preventDefault();
+          selectedElement.remove();
+          selectedElement = null;
+          selectedElementEl.textContent = 'None';
+          elementPosEl.textContent = '-';
+          elementSizeEl.textContent = '-';
+          syncToEditor();
+        }
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      editor.resize();
+    });
+  </script>
+</body>
+</html>
