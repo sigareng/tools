@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BeautyHTML - Clean & View Code</title>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.43.6/src-min-noconflict/ace.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-beautify@1.15.4/js/lib/beautify-html.min.js"></script>
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root { --bg: #0f172a; --panel: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; }
+        body, html { margin: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        .wrapper { display: flex; height: 100vh; }
+        .panel { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; }
+        #editor, #viewer { flex: 1; font-size: 14px; }
+        .preview-frame { flex: 1; border: none; background: white; display: block; }
+        .hidden { display: none !important; }
+        
+        /* Kontrol Tengah */
+        .controls { width: 240px; background: var(--panel); display: flex; flex-direction: column; padding: 20px; gap: 15px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); z-index: 100; }
+        .btn { background: var(--accent); color: #0f172a; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-copy { background: #64748b; color: white; margin-top: 5px; }
+
+        /* Tab Switcher */
+        .tab-container { display: flex; background: #0f172a; padding: 5px; border-radius: 8px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: #94a3b8; cursor: pointer; border-radius: 6px; font-size: 12px; font-weight: 600; transition: 0.3s; }
+        .tab-btn.active { background: var(--panel); color: var(--accent); }
+
+        .opt { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #94a3b8; }
+        select { padding: 8px; border-radius: 6px; background: #0f172a; color: white; border: 1px solid var(--border); cursor: pointer; }
+        .check { display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--text); }
+        .header { padding: 12px 20px; background: #00000044; font-size: 13px; font-weight: bold; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <!-- PANEL KIRI: EDITOR -->
+    <div class="panel">
+        <div class="header"><span><i class='bx bx-code-alt'></i> SOURCE EDITOR</span></div>
+        <div id="editor"></div>
+    </div>
+
+    <!-- PANEL TENGAH: TOOLS -->
+    <div class="controls">
+        <div class="opt">
+            <label>Mode Tampilan Kanan:</label>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchTab('preview')"><i class='bx bx-show'></i> View</button>
+                <button class="tab-btn" onclick="switchTab('code')"><i class='bx bx-code-block'></i> Code</button>
+            </div>
+        </div>
+
+        <button class="btn" onclick="beautifyAndClean()">
+            <i class='bx bxs-magic-wand'></i> BEAUTIFY & CLEAN
+        </button>
+
+        <div class="opt">
+            <label>Tab Spacing:</label>
+            <select id="tabSize">
+                <option value="2">2 Spaces</option>
+                <option value="4" selected>4 Spaces</option>
+                <option value="8">8 Spaces</option>
+            </select>
+        </div>
+
+        <div class="opt" style="margin-top: 10px;">
+            <label class="check">
+                <input type="checkbox" id="removeBlank" checked> Hapus Baris Kosong
+            </label>
+            <label class="check">
+                <input type="checkbox" id="autoUpdate" checked> Auto Update
+            </label>
+        </div>
+
+        <button class="btn btn-copy" onclick="copyResult()">
+            <i class='bx bx-copy'></i> Salin Hasil
+        </button>
+
+        <div style="margin-top:auto; font-size: 10px; color: #475569; text-align: center; line-height: 1.5;">
+            BeautyHTML Pro v2.0<br>Clean & View Optimized
+        </div>
+    </div>
+
+    <!-- PANEL KANAN: RESULT -->
+    <div class="panel">
+        <div class="header">
+            <span id="rightHeaderTitle">RESULT PREVIEW</span>
+            <span id="copyNotif" style="color: var(--accent); display: none;">Tersalin!</span>
+        </div>
+        
+        <!-- Mode Visual -->
+        <iframe id="preview" class="preview-frame"></iframe>
+        
+        <!-- Mode View Code (Read Only Ace) -->
+        <div id="viewer" class="hidden"></div>
+    </div>
+</div>
+
+<script>
+    // Inisialisasi Editor Kiri (Input)
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/html");
+    editor.setValue("<!-- Tempel Kode Di Sini -->\n<section>\n\n   <h1>   Hello World  </h1>\n\n\n   <p>Bersihkan baris kosong ini...</p>\n\n</section>", -1);
+
+    // Inisialisasi Viewer Kanan (View Code)
+    const viewer = ace.edit("viewer");
+    viewer.setTheme("ace/theme/monokai");
+    viewer.session.setMode("ace/mode/html");
+    viewer.setReadOnly(true); // Hanya untuk melihat
+    viewer.renderer.setShowGutter(true);
+
+    function switchTab(mode) {
+        const pFrame = document.getElementById('preview');
+        const vEditor = document.getElementById('viewer');
+        const title = document.getElementById('rightHeaderTitle');
+        const btns = document.querySelectorAll('.tab-btn');
+
+        btns.forEach(b => b.classList.remove('active'));
+
+        if(mode === 'preview') {
+            pFrame.classList.remove('hidden');
+            vEditor.classList.add('hidden');
+            title.innerText = "RESULT PREVIEW";
+            btns[0].classList.add('active');
+        } else {
+            pFrame.classList.add('hidden');
+            vEditor.classList.remove('hidden');
+            title.innerText = "CLEANED SOURCE CODE";
+            btns[1].classList.add('active');
+            viewer.setValue(editor.getValue(), -1); // Update viewer saat tab dibuka
+        }
+    }
+
+    function beautifyAndClean() {
+        let code = editor.getValue();
+        const tabSize = parseInt(document.getElementById('tabSize').value);
+        const shouldRemoveBlank = document.getElementById('removeBlank').checked;
+
+        let formatted = html_beautify(code, {
+            indent_size: tabSize,
+            indent_char: ' ',
+            max_preserve_newlines: shouldRemoveBlank ? 1 : 10,
+            preserve_newlines: true,
+            indent_inner_html: true
+        });
+
+        if(shouldRemoveBlank) {
+            // Hapus baris yang hanya berisi whitespace/kosong
+            formatted = formatted.replace(/^\s*[\r\n]/gm, '').trim();
+        }
+
+        editor.setValue(formatted, -1);
+        viewer.setValue(formatted, -1);
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const code = editor.getValue();
+        const preview = document.getElementById('preview');
+        const doc = preview.contentDocument || preview.contentWindow.document;
+        doc.open();
+        doc.write(code);
+        doc.close();
+        viewer.setValue(code, -1);
+    }
+
+    function copyResult() {
+        const code = editor.getValue();
+        navigator.clipboard.writeText(code).then(() => {
+            const notif = document.getElementById('copyNotif');
+            notif.style.display = 'inline';
+            setTimeout(() => notif.style.display = 'none', 2000);
+        });
+    }
+
+    editor.session.on('change', () => {
+        if (document.getElementById('autoUpdate').checked) updatePreview();
+    });
+
+    updatePreview();
+</script>
+</body>
+</html>
