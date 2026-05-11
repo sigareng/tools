@@ -1,170 +1,473 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tools</title>
+    <title>Tools Dashboard Hub</title>
     
-    <!-- Mengimpor Font Modern -->
+    <!-- Google Fonts: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style type="text/css">
-        /* Reset Dasar & Variabel */
+    <style>
         :root {
-            --primary-color: #2563eb;
-            --text-color: #1f2937;
-            --bg-overlay: rgba(255, 255, 255, 0.85);
-            --btn-bg: #ffffff;
-            --btn-border: #d1d5db;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --bg-card: rgba(255, 255, 255, 0.6);
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: rgba(255, 255, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+            outline: none;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
+            margin: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: url("https://unsplash.it/1920/1080/?random") no-repeat center center fixed;
-            background-size: cover;
-            color: var(--text-color);
-            padding: 20px;
-            position: relative;
+            /* Background abstrak modern */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            overflow-x: hidden;
         }
 
-        /* Overlay Background agar teks terbaca */
+        /* Overlay Pattern Halus */
         body::before {
             content: "";
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px); /* Efek blur modern */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             z-index: -1;
         }
 
         /* Container Utama */
         .container {
-            width: 100%;
-            max-width: 450px;
-            background-color: var(--bg-overlay);
-            padding: 40px 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1000px;
+            margin: 40px auto;
+            flex: 1;
+        }
+
+        /* Header & Search */
+        .header-section {
             text-align: center;
-        }
-
-        /* Header Section */
-        .header {
             margin-bottom: 30px;
+            background: var(--bg-glass);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
         }
 
-        .header img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 15px;
-            border: 4px solid white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .header-section h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            background: -webkit-linear-gradient(45deg, var(--primary), #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
         }
 
-        .header h3 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text-color);
+        .header-section p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
-        /* Tombol Navigasi */
-        .btn {
+        .search-box {
+            margin-top: 20px;
+            position: relative;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border-radius: 50px;
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: inherit;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        /* Grid Tools */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        /* Kartu Tool */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: #ffffff;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(79, 70, 229, 0.1);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            padding: 15px 20px;
-            margin-bottom: 15px;
-            background-color: var(--btn-bg);
-            color: var(--text-color);
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            border: 2px solid var(--btn-border);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 20px;
+            color: var(--primary);
+            margin-bottom: 16px;
+            transition: 0.3s;
         }
 
-        .btn:last-of-type {
-            margin-bottom: 0;
-        }
-
-        .btn:hover {
-            background-color: var(--primary-color);
+        .card:hover .card-icon {
+            background: var(--primary);
             color: white;
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .card span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Loading Skeleton Animation */
+        .skeleton {
+            height: 140px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 16px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
 
         /* Footer */
-        .footer {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #6b7280;
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .footer a {
-            color: var(--primary-color);
+        footer a {
+            color: white;
             text-decoration: none;
             font-weight: 600;
         }
 
-        .footer a:hover {
-            text-decoration: underline;
+        /* Error Message */
+        .error-msg {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: rgba(255, 200, 200, 0.2);
+            color: #b91c1c;
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            display: none;
+        }
+
+        /* Responsif Mobile */
+        @media (max-width: 600px) {
+            .header-section { padding: 20px; }
+            .header-section h1 { font-size: 1.5rem; }
+            .tools-grid { grid-template-columns: 1fr; } /* 1 Kolom di HP */
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header">
-            <h3>Tools</h3>
-        </div>
+        <!-- Header & Search -->
+        <header class="header-section">
+            <h1>Tools Collection</h1>
+            <p>Kumpulan alat web sederhana untuk produktivitas harian</p>
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Cari alat (misal: converter, password)...">
+            </div>
+        </header>
 
-        <nav>
-            <a class="btn" href="./count.html">HTML Decode & Encode</a>
-            <a class="btn" href="./linebreaks.html">Replace Line Breaks & Reversed</a>
-            <a class="btn" href="./pwd.html">Password_hash()</a>
-            <a class="btn" href="./jsonpath.html">JSON Path Preview</a>
-            <a class="btn" href="https://sigareng.github.io/imgtobase64/">Image - Url to base64</a>
-            <a class="btn" href="./html-preview.html">HTML Live Preview</a>
-            <a class="btn" href="./beautyhtml.html">BeautyHTML</a>
-            <a class="btn" href="./svg-convert.html">SVG Convert</a>
-            <a class="btn" href="./svg-editor.html">SVG Editor</a>
-        </nav>
-
-        <div class="footer" id="foot">
-            <!-- Javascript Footer -->
-            <script>
-                const year = new Date().getFullYear();
-                const url = window.location.href;
-                document.getElementById('foot').innerHTML = `
-                    <p>Copyright &copy; ${year} <a href="${url}">sigareng.github.io</a></p>
-                `;
-            </script>
-        </div>
+        <!-- Grid Container -->
+        <main class="tools-grid" id="toolsGrid">
+            <!-- Skeleton Loader (tampilan loading) -->
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+        </main>
     </div>
 
+    <footer>
+        <p>&copy; <span id="year"></span> <a href="#" id="ownerLink">Owner</a>. Dibuat dengan ❤️.</p>
+    </footer>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI (Edit Bagian Ini)
+        // ==========================================
+        const CONFIG = {
+            owner: 'sigareng',      // Username GitHub
+            repo: 'tools',          // Nama Repository
+            ignore: ['index.html', '404.html', 'style.css', 'README.md'], // File yang diabaikan
+            // List Tool Manual (Untuk link eksternal agar tidak hilang)
+
+            manualTools: [
+                {
+                  "name": "HTML Decode & Encode",
+                  "url": "./count.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "Replace Line Breaks & Reversed",
+                  "url": "./linebreaks.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "Password_hash()",
+                  "url": "./pwd.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "JSON Path Preview",
+                  "url": "./jsonpath.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "Image - Url to base64",
+                  "url": "https://sigareng.github.io/imgtobase64/",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "HTML Live Preview",
+                  "url": "./html-preview.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "BeautyHTML",
+                  "url": "./beautyhtml.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "SVG Convert",
+                  "url": "./svg-convert.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                },
+                {
+                  "name": "SVG Editor",
+                  "url": "./svg-editor.html",
+                  "icon": "fa-code",
+                  "type": "Eksternal"
+                }
+            ]
+        };
+
+        // ==========================================
+        // LOGIKA PROGRAM
+        // ==========================================
+        
+        // Mapping Ikon Otomatis berdasarkan kata kunci di nama file
+        // Anda bisa menambahkannya sendiri agar lebih menarik
+        const iconMap = {
+            'pdf': 'fa-file-pdf',
+            'image': 'fa-image',
+            'img': 'fa-image',
+            'jpg': 'fa-image',
+            'png': 'fa-image',
+            'converter': 'fa-exchange-alt',
+            'calc': 'fa-calculator',
+            'calculator': 'fa-calculator',
+            'color': 'fa-palette',
+            'json': 'fa-code',
+            'text': 'fa-file-alt',
+            'todo': 'fa-check-square',
+            'password': 'fa-key',
+            'generator': 'fa-magic',
+            'downloader': 'fa-download',
+            'youtube': 'fa-youtube',
+            'music': 'fa-music',
+            'video': 'fa-video',
+            'weather': 'fa-cloud-sun'
+        };
+
+        const grid = document.getElementById('toolsGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        // 1. Setup Tahun & Footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+        document.getElementById('ownerLink').textContent = CONFIG.owner;
+        document.getElementById('ownerLink').href = `https://github.com/${CONFIG.owner}`;
+
+        // 2. Fungsi mendapatkan ikon
+        function getIcon(name) {
+            const lowerName = name.toLowerCase();
+            for (const key in iconMap) {
+                if (lowerName.includes(key)) {
+                    return iconMap[key];
+                }
+            }
+            return 'fa-tools'; // Ikon default jika tidak cocok
+        }
+
+        // 3. Fungsi Render Card ke HTML
+        function createCard(name, url, type = "Tool", customIcon = null) {
+            const icon = customIcon || getIcon(name);
+            // Format nama agar rapi (hapus .html dan ganti - dengan spasi)
+            const displayName = name.replace('.html', '').replace(/-/g, ' ').replace(/_/g, ' ');
+            
+            return `
+                <a href="${url}" class="card" target="${url.startsWith('http') ? '_blank' : '_self'}">
+                    <div class="card-icon">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <h3>${displayName.charAt(0).toUpperCase() + displayName.slice(1)}</h3>
+                    <span>${type}</span>
+                </a>
+            `;
+        }
+
+        // 4. Fungsi Utama Fetch Data
+        async function initDashboard() {
+            let allHtml = '';
+
+            try {
+                // Fetch isi repo GitHub
+                const res = await fetch(
+                    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/`
+                );
+
+                if (!res.ok) throw new Error('Gagal mengambil data repo');
+
+                const files = await res.json();
+
+                // Render file HTML dari GitHub
+                files.forEach(file => {
+                    if (
+                        file.name.endsWith('.html') &&
+                        !CONFIG.ignore.includes(file.name)
+                    ) {
+                        allHtml += createCard(
+                            file.name,
+                            `./${file.name}`,
+                            "Web App"
+                        );
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error:", error);
+
+                // Jika gagal baru pakai manualTools
+                CONFIG.manualTools.forEach(tool => {
+                    allHtml += createCard(
+                        tool.name,
+                        tool.url,
+                        tool.type,
+                        tool.icon
+                    );
+                });
+
+                // Pesan error
+                allHtml += `
+                    <div class="error-msg" style="display:block">
+                        Gagal memuat otomatis dari GitHub 
+                        (Rate Limit / Network).
+                        Menampilkan manual tools saja.
+                    </div>
+                `;
+            }
+
+            // Render ke halaman
+            grid.innerHTML = allHtml;
+        }
+
+        // 5. Fitur Pencarian (Filter Realtime)
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                if (title.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Jalankan saat load
+        initDashboard();
+
+    </script>
 </body>
 </html>
